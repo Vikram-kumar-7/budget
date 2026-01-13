@@ -138,4 +138,55 @@ Phosphor Icons
 
 Storage
 
+
+
+📈 Data Science Concepts Used
+
+Time-series aggregation
+
+Cumulative sums (running balance)
+
+Category-based grouping
+
+Percentage and threshold analysis
+
+Data transformation for visualization
+
+⚠ Limitations (Current Version)
+
+No authentication or multi-user support
+
+Data stored locally (not secure or scalable)
+
+Performance depends on browser memory
+
+Monolithic file structure
+
+These are intentional trade-offs for a frontend-first prototype.
+
+🔮 Planned Enhancements
+
+Migrate persistence to MongoDB
+
+Build REST APIs using Node.js & Express
+
+Add JWT-based authentication
+
+Introduce advanced analytics (monthly trends, predictions)
+
+Modularize frontend code
+
+Deploy full MERN stack version
+
+👨‍💻 Author
+
+Kumar Vikram Aditya
+Computer Science Undergraduate
+Focus: Data Science | MERN Backend | DSA in C++
+
+📌 Disclaimer
+
+This project is built for learning, experimentation, and skill development.
+It demonstrates strong fundamentals in data handling and frontend analytics and serves as a foundation for future backend and data science extensions
+
 Browser localStorage
