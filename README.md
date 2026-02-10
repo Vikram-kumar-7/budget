@@ -1,6 +1,7 @@
 # budget
 This is my first github file.
 BudgetMaster – Personal Finance & Analytics App
+
 📌 Overview
 
 BudgetMaster is a feature-rich, single-page personal finance application built using HTML, CSS, and JavaScript.
