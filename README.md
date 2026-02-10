@@ -190,3 +190,4 @@ This project is built for learning, experimentation, and skill development.
 It demonstrates strong fundamentals in data handling and frontend analytics and serves as a foundation for future backend and data science extensions
 
 Browser localStorage
+with BackUp features
