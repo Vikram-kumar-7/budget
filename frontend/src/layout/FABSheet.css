@@ -1,0 +1,61 @@
+.fab-sheet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.fab-option-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r-md);
+  background: var(--bg-tint);
+  border: 1px solid var(--border-tint);
+  cursor: pointer;
+  gap: 16px;
+  transition: all var(--t-fast);
+}
+
+.fab-option-btn:hover {
+  filter: brightness(1.2);
+}
+
+.fab-option-btn:active {
+  transform: scale(0.98);
+}
+
+.fab-option-icon {
+  font-size: 22px;
+}
+
+.fab-option-label {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--txt-primary);
+}
+
+.fab-cancel-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--txt-muted);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  margin-top: 8px;
+}
+
+.fab-cancel-btn:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.fab-cancel-btn:active {
+  transform: scale(0.98);
+}

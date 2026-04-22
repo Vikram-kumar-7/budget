@@ -1,0 +1,19 @@
+@keyframes fadeUp    { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleIn   { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
+@keyframes slideUp   { from { transform:translateY(100%); } to { transform:translateY(0); } }
+@keyframes barGrow   { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+@keyframes coinSpin  { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes progressFill { from { width: 0; } }
+@keyframes shake     { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+@keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:0.45} }
+@keyframes shimmer   { from{background-position:-200% 0} to{background-position:200% 0} }
+@keyframes popIn     { 0%{transform:scale(0.7);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+@keyframes glow      { 0%,100%{box-shadow:0 0 20px rgba(16,232,160,0.1)} 50%{box-shadow:0 0 40px rgba(16,232,160,0.25)} }
+
+.fu  { animation: fadeUp var(--t-mid) both; }
+.fu1 { animation: fadeUp var(--t-mid) 0.06s both; }
+.fu2 { animation: fadeUp var(--t-mid) 0.12s both; }
+.fu3 { animation: fadeUp var(--t-mid) 0.18s both; }
+.fu4 { animation: fadeUp var(--t-mid) 0.24s both; }
+.fu5 { animation: fadeUp var(--t-mid) 0.30s both; }
+.si  { animation: scaleIn var(--t-slow) both; }

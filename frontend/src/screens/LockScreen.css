@@ -1,0 +1,122 @@
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #0F1525 0%, #000000 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.lock-glow {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  background: rgba(16, 232, 160, 0.15);
+  filter: blur(80px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.lock-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.lock-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.lock-subtitle {
+  font-size: 13px;
+  color: var(--txt-muted);
+  letter-spacing: 4px;
+  font-weight: 500;
+}
+
+.lock-dots {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 50px;
+}
+
+.shake-anim {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.lock-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-hover);
+  transition: all var(--t-fast);
+}
+
+.lock-dot.filled {
+  border-color: var(--green);
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(16,232,160,0.3);
+}
+
+.lock-dot.error {
+  border-color: var(--red);
+  background: var(--red);
+  box-shadow: 0 0 12px rgba(255,90,106,0.3);
+}
+
+.pop-in {
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.lock-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 24px;
+}
+
+.numpad-btn {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--txt-primary);
+  font-family: var(--font);
+  font-size: 28px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--t-fast);
+}
+
+.numpad-btn:hover {
+  background: rgba(16,232,160,0.1);
+  border-color: rgba(16,232,160,0.3);
+}
+
+.numpad-btn:active {
+  transform: scale(0.92);
+}
+
+.backspace-btn {
+  background: transparent;
+  border: none;
+  color: var(--txt-muted);
+}
+
+.backspace-btn:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: transparent;
+}

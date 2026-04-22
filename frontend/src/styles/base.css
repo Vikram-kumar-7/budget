@@ -1,0 +1,15 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-base);
+  color: var(--txt-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbars globally but keep scroll */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+/* Tap highlight off on mobile */
+* { -webkit-tap-highlight-color: transparent; }

@@ -1,0 +1,43 @@
+:root {
+  /* Backgrounds */
+  --bg-base:      #0A0E19;
+  --bg-card:      #111827;
+  --bg-surface:   #0F1525;
+  --bg-elevated:  #162032;
+
+  /* Brand */
+  --green:        #10E8A0;
+  --blue:         #4C9AFF;
+  --violet:       #A78BFA;
+  --gold:         #FFB020;
+  --red:          #FF5A6A;
+
+  /* Text */
+  --txt-primary:  #E8F0FE;
+  --txt-muted:    #5A6A88;
+  --txt-dim:      #2E3A50;
+
+  /* Borders */
+  --border:       rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+
+  /* Radius */
+  --r-sm:  10px;
+  --r-md:  16px;
+  --r-lg:  22px;
+  --r-xl:  30px;
+  --r-full: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-fab:  0 6px 28px rgba(16,232,160,0.28);
+  --shadow-glow-green: 0 0 40px rgba(16,232,160,0.08);
+
+  /* Font */
+  --font: 'Outfit', system-ui, sans-serif;
+
+  /* Transitions */
+  --t-fast: 0.15s ease;
+  --t-mid:  0.25s ease;
+  --t-slow: 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}

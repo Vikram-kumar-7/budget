@@ -1,0 +1,89 @@
+.bottom-nav-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding-bottom: 14px; /* safe area / indicator space */
+}
+
+.bottom-nav {
+  display: flex;
+  height: 66px; /* remainder */
+  align-items: center;
+  justify-content: space-around;
+  position: relative;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--txt-muted);
+  gap: 4px;
+  transition: transform var(--t-fast);
+}
+
+.nav-item:active:not(.fab-slot) {
+  transform: scale(0.88);
+}
+
+.nav-item.active {
+  color: var(--green);
+}
+
+.nav-icon-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 28px;
+}
+
+.nav-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--green);
+  position: absolute;
+  bottom: -6px;
+}
+
+.nav-label {
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.fab-slot {
+  position: relative;
+}
+
+.fab-nav-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  box-shadow: var(--shadow-fab);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  bottom: 10px; /* raised */
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+  animation: glow 3s ease-in-out infinite;
+}
+
+.fab-nav-button:active {
+  transform: scale(0.9);
+}
