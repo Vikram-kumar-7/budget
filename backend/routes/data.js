@@ -44,6 +44,10 @@ router.post('/accounts', auth, async (req, res) => {
         const user = await getUser(req.user.id);
         const account = { _id: uuidv4(), ...req.body, createdAt: new Date() };
         user.appData.accounts.push(account);
+        // Mark user as having a linked account
+        if (!user.hasLinkedAccount) {
+            user.hasLinkedAccount = true;
+        }
         await saveUser(user);
         res.status(201).json(account);
     } catch (err) {

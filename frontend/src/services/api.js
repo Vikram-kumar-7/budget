@@ -2,16 +2,18 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 class Api {
   constructor() {
-    this.token = localStorage.getItem('token');
+    // Support both token keys for backward compat
+    this.token = localStorage.getItem('bm_token') || localStorage.getItem('token');
   }
 
   setToken(token) {
     this.token = token;
-    localStorage.setItem('token', token);
+    localStorage.setItem('bm_token', token);
   }
 
   clearToken() {
     this.token = null;
+    localStorage.removeItem('bm_token');
     localStorage.removeItem('token');
   }
 
@@ -27,7 +29,13 @@ class Api {
     }
 
     const response = await fetch(url, { ...options, headers });
-    const data = await response.json();
+
+    // Handle empty responses (e.g. 204 No Content)
+    let data = {};
+    const text = await response.text();
+    if (text) {
+      try { data = JSON.parse(text); } catch { data = { msg: text }; }
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -43,6 +51,7 @@ class Api {
   get(endpoint) { return this.request(endpoint, { method: 'GET' }); }
   post(endpoint, body) { return this.request(endpoint, { method: 'POST', body: JSON.stringify(body) }); }
   put(endpoint, body) { return this.request(endpoint, { method: 'PUT', body: JSON.stringify(body) }); }
+  patch(endpoint, body) { return this.request(endpoint, { method: 'PATCH', body: JSON.stringify(body) }); }
   delete(endpoint) { return this.request(endpoint, { method: 'DELETE' }); }
 }
 
