@@ -2,25 +2,36 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// ── Resend email client (HTTP API — works on Render/cloud, never blocked) ──
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ── Brevo SMTP transporter (300 emails/day free, works on Render) ──
+function createBrevoTransporter() {
+    return nodemailer.createTransport({
+        host: 'smtp-relay.brevo.com',
+        port: 587,
+        secure: false, // STARTTLS
+        auth: {
+            user: process.env.BREVO_SMTP_USER,  // your Brevo login email
+            pass: process.env.BREVO_SMTP_KEY,   // Brevo SMTP key
+        },
+    });
+}
 
 // Fire-and-forget — never awaited by route, never blocks the response
 function sendOtpEmailBackground(toEmail, otp) {
     // Always log OTP to console as a reliable fallback
     console.log(`\n🔐 OTP for ${toEmail}: ${otp}\n`);
 
-    if (!process.env.RESEND_API_KEY) {
-        console.warn('[email] RESEND_API_KEY not set — OTP only in logs above');
+    if (!process.env.BREVO_SMTP_USER || !process.env.BREVO_SMTP_KEY) {
+        console.warn('[email] BREVO_SMTP_USER or BREVO_SMTP_KEY not set — OTP only in logs above');
         return;
     }
 
-    resend.emails.send({
-        from: 'BudgetMaster <onboarding@resend.dev>',
+    const transporter = createBrevoTransporter();
+    transporter.sendMail({
+        from: '"BudgetMaster" <vk4780024@gmail.com>',
         to: toEmail,
         subject: '🔐 Your BudgetMaster Verification Code',
         html: `
@@ -33,9 +44,10 @@ function sendOtpEmailBackground(toEmail, otp) {
                 </div>
                 <p style="color:#5A6A88;font-size:13px">Expires in <strong style="color:#FFB020">10 minutes</strong>. Do not share this code.</p>
             </div>`,
-    }).then(({ data, error }) => {
-        if (error) console.error(`[email] Resend error for ${toEmail}:`, error);
-        else console.log(`[email] Delivered to ${toEmail}, id: ${data.id}`);
+    }).then(info => {
+        console.log(`[email] ✅ Delivered to ${toEmail}, messageId: ${info.messageId}`);
+    }).catch(err => {
+        console.error(`[email] ❌ Brevo error for ${toEmail}:`, err.message);
     });
 }
 
