@@ -2,8 +2,45 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+
+// ── Email transporter (Gmail) ─────────────────────────────────────
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+async function sendOtpEmail(toEmail, otp) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        // Fallback: log to console if email not configured
+        console.log(`\n🔐 OTP for ${toEmail}: ${otp}\n`);
+        return;
+    }
+    await transporter.sendMail({
+        from: `"BudgetMaster" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject: '🔐 Your BudgetMaster Verification Code',
+        html: `
+            <div style="font-family: 'Outfit', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0A0E19; color: #E8F0FE; border-radius: 16px; padding: 32px; border: 1px solid rgba(255,255,255,0.08);">
+                <h2 style="color: #10E8A0; margin-bottom: 8px;">BudgetMaster</h2>
+                <p style="color: #5A6A88; margin-bottom: 24px;">Your personal finance companion</p>
+                <p style="font-size: 16px; margin-bottom: 16px;">Your verification code is:</p>
+                <div style="background: #111827; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px; border: 1px solid rgba(16,232,160,0.2);">
+                    <span style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #10E8A0;">${otp}</span>
+                </div>
+                <p style="color: #5A6A88; font-size: 13px;">This code expires in <strong style="color: #FFB020;">10 minutes</strong>. Do not share it with anyone.</p>
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 24px 0;" />
+                <p style="color: #5A6A88; font-size: 12px;">If you did not request this, please ignore this email.</p>
+            </div>
+        `,
+    });
+}
+
 
 // Helper to generate JWT
 const signToken = (userId) => new Promise((resolve, reject) => {
@@ -60,8 +97,8 @@ router.post('/send-otp', async (req, res) => {
             await user.save();
         }
 
-        // In a real app, send email here. For now, log to server console.
-        console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
+        // Send OTP via email (or console.log if email not configured)
+        await sendOtpEmail(email, otp);
 
         res.json({ success: true, message: 'OTP sent to email (check server logs)' });
     } catch (err) {
