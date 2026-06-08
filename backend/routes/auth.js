@@ -21,7 +21,8 @@ async function sendOtpEmail(toEmail, otp) {
         console.log(`\n🔐 OTP for ${toEmail}: ${otp}\n`);
         return;
     }
-    await transporter.sendMail({
+
+    const emailPromise = transporter.sendMail({
         from: `"BudgetMaster" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: '🔐 Your BudgetMaster Verification Code',
@@ -39,6 +40,20 @@ async function sendOtpEmail(toEmail, otp) {
             </div>
         `,
     });
+
+    // 8-second timeout to prevent SMTP connection hangs
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Email sending timed out')), 8000)
+    );
+
+    try {
+        await Promise.race([emailPromise, timeoutPromise]);
+        console.log(`[sendOtpEmail] Email sent successfully to ${toEmail}`);
+    } catch (err) {
+        console.error(`[sendOtpEmail] Failed/timed out sending email:`, err.message);
+        // Fallback: log the OTP to the console so it's retrievable in the logs
+        console.log(`\n🔐 FALLBACK OTP for ${toEmail}: ${otp}\n`);
+    }
 }
 
 
@@ -71,21 +86,22 @@ const safeUser = (user) => ({
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/send-otp', async (req, res) => {
     const { email } = req.body;
+    console.log(`[send-otp] Request received for email: ${email}`);
     if (!email) return res.status(400).json({ msg: 'Email is required' });
 
     try {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        // Find or create a placeholder user record to store the OTP
+        console.log(`[send-otp] Searching for user: ${email}`);
         let user = await User.findOne({ email });
         if (user) {
+            console.log(`[send-otp] Existing user found. Updating OTP.`);
             user.otp = otp;
             user.otpExpiry = otpExpiry;
             await user.save();
         } else {
-            // Store OTP temporarily — user will be finalized on /register
-            // We create a minimal temp record. It gets overwritten on register.
+            console.log(`[send-otp] No user found. Creating temporary user record.`);
             user = new User({
                 name: 'pending',
                 email,
@@ -96,13 +112,15 @@ router.post('/send-otp', async (req, res) => {
             });
             await user.save();
         }
+        console.log(`[send-otp] User saved successfully. Invoking sendOtpEmail...`);
 
         // Send OTP via email (or console.log if email not configured)
         await sendOtpEmail(email, otp);
 
+        console.log(`[send-otp] Completed. Sending response.`);
         res.json({ success: true, message: 'OTP sent to email (check server logs)' });
     } catch (err) {
-        console.error(err.message);
+        console.error(`[send-otp] ERROR:`, err.message);
         res.status(500).json({ msg: 'Server error' });
     }
 });
