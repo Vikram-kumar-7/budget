@@ -3,7 +3,7 @@ if (API_URL.startsWith('http') && !API_URL.endsWith('/api') && !API_URL.endsWith
   API_URL = API_URL.endsWith('/') ? `${API_URL}api` : `${API_URL}/api`;
 }
 
-const REQUEST_TIMEOUT_MS = 15000; // 15 seconds max per request
+const REQUEST_TIMEOUT_MS = 60000; // 60 seconds — Render free tier can take 30-50s to wake up
 
 class Api {
   constructor() {
@@ -42,7 +42,7 @@ class Api {
       response = await fetch(url, { ...options, headers, signal: controller.signal });
     } catch (err) {
       if (err.name === 'AbortError') {
-        throw new Error('Request timed out. Please check your connection and try again.');
+        throw new Error('Server is waking up (Render free tier). Please wait 30 seconds and try again.');
       }
       throw new Error('Failed to reach the server. Please check your connection.');
     } finally {
