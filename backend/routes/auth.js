@@ -2,51 +2,40 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// ── Email transporter — port 587 STARTTLS (works on Render/cloud) ──
-function createTransporter() {
-    return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // STARTTLS
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-    });
-}
+// ── Resend email client (HTTP API — works on Render/cloud, never blocked) ──
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Fire-and-forget — never awaited by the route, so it never blocks the response
+// Fire-and-forget — never awaited by route, never blocks the response
 function sendOtpEmailBackground(toEmail, otp) {
-    // Always log OTP to console (visible in Render logs as a reliable fallback)
+    // Always log OTP to console as a reliable fallback
     console.log(`\n🔐 OTP for ${toEmail}: ${otp}\n`);
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('[email] RESEND_API_KEY not set — OTP only in logs above');
+        return;
+    }
 
-    const t = createTransporter();
-    t.sendMail({
-        from: `"BudgetMaster" <${process.env.EMAIL_USER}>`,
+    resend.emails.send({
+        from: 'BudgetMaster <onboarding@resend.dev>',
         to: toEmail,
         subject: '🔐 Your BudgetMaster Verification Code',
         html: `
             <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0A0E19;color:#E8F0FE;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.08)">
-                <h2 style="color:#10E8A0">BudgetMaster</h2>
-                <p>Your verification code:</p>
-                <div style="background:#111827;border-radius:12px;padding:24px;text-align:center;border:1px solid rgba(16,232,160,0.2)">
-                    <span style="font-size:40px;font-weight:700;letter-spacing:12px;color:#10E8A0">${otp}</span>
+                <h2 style="color:#10E8A0;margin-bottom:4px">BudgetMaster</h2>
+                <p style="color:#5A6A88;margin-top:0">Your personal finance companion</p>
+                <p style="font-size:16px">Your verification code is:</p>
+                <div style="background:#111827;border-radius:12px;padding:24px;text-align:center;border:1px solid rgba(16,232,160,0.2);margin:16px 0">
+                    <span style="font-size:42px;font-weight:700;letter-spacing:14px;color:#10E8A0">${otp}</span>
                 </div>
-                <p style="color:#5A6A88;font-size:13px">Expires in <strong style="color:#FFB020">10 minutes</strong>.</p>
+                <p style="color:#5A6A88;font-size:13px">Expires in <strong style="color:#FFB020">10 minutes</strong>. Do not share this code.</p>
             </div>`,
-    }).then(() => {
-        console.log(`[email] Sent successfully to ${toEmail}`);
-    }).catch(err => {
-        console.error(`[email] Failed to send to ${toEmail}:`, err.message);
+    }).then(({ data, error }) => {
+        if (error) console.error(`[email] Resend error for ${toEmail}:`, error);
+        else console.log(`[email] Delivered to ${toEmail}, id: ${data.id}`);
     });
 }
 
