@@ -3,6 +3,8 @@ if (API_URL.startsWith('http') && !API_URL.endsWith('/api') && !API_URL.endsWith
   API_URL = API_URL.endsWith('/') ? `${API_URL}api` : `${API_URL}/api`;
 }
 
+const REQUEST_TIMEOUT_MS = 15000; // 15 seconds max per request
+
 class Api {
   constructor() {
     // Support both token keys for backward compat
@@ -31,7 +33,21 @@ class Api {
       headers['x-auth-token'] = this.token;
     }
 
-    const response = await fetch(url, { ...options, headers });
+    // AbortController gives us a hard timeout on every fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response;
+    try {
+      response = await fetch(url, { ...options, headers, signal: controller.signal });
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Request timed out. Please check your connection and try again.');
+      }
+      throw new Error('Failed to reach the server. Please check your connection.');
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     // Handle empty responses (e.g. 204 No Content)
     let data = {};
