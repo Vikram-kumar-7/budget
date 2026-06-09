@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
@@ -56,17 +56,11 @@ export default function OnboardingScreen({ onGoToLogin }) {
 
     // Step 2 — Email
     const [email, setEmail] = useState('');
-    const [otpSent, setOtpSent] = useState(false);
 
-    // Step 3 — OTP
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
-    const [devOtp, setDevOtp] = useState('');
-    const otpRefs = useRef([]);
-
-    // Step 4 — Avatar
+    // Step 3 — Avatar
     const [avatar, setAvatar] = useState('avatar_1');
 
-    // Step 5 — Password
+    // Step 4 — Password
     const [password, setPassword] = useState('');
     const [confirmPw, setConfirmPw] = useState('');
     const [showPw, setShowPw] = useState(false);
@@ -82,84 +76,20 @@ export default function OnboardingScreen({ onGoToLogin }) {
         setStep(2);
     };
 
-    // ── Step 2: Send OTP ───────────────────────────────────────────
+    // ── Step 2: Validate email and advance ─────────────────────────
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const handleSendOtp = async () => {
+    const handleStep2 = () => {
         clearError();
         if (!emailRegex.test(email)) { setError('Please enter a valid email address'); return; }
-        setLoading(true);
-        try {
-            const res = await api.post('/auth/send-otp', { email });
-            setOtpSent(true);
-            setStep(3);
-            if (res.otp) {
-                setOtp(res.otp.split(''));
-                setDevOtp(res.otp);
-            } else {
-                setDevOtp('');
-            }
-        } catch (err) {
-            setError(err.message || 'Failed to send OTP');
-        } finally {
-            setLoading(false);
-        }
+        setStep(3);
     };
 
-    // ── Step 3: OTP input handling ─────────────────────────────────
-    const handleOtpChange = (idx, val) => {
-        if (!/^\d?$/.test(val)) return;
-        const next = [...otp];
-        next[idx] = val;
-        setOtp(next);
-        if (val && idx < 5) otpRefs.current[idx + 1]?.focus();
+    // ── Step 3: Avatar ─────────────────────────────────────────────
+    const handleStep3 = () => {
+        setStep(4);
     };
 
-    const handleOtpKeyDown = (idx, e) => {
-        if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpRefs.current[idx - 1]?.focus();
-    };
-
-    const handleVerifyOtp = async () => {
-        clearError();
-        const code = otp.join('');
-        if (code.length < 6) { setError('Please enter the complete 6-digit OTP'); return; }
-        setLoading(true);
-        try {
-            const res = await api.post('/auth/verify-otp', { email, otp: code });
-            if (res.success) setStep(4);
-            else setError(res.message || 'Invalid OTP');
-        } catch (err) {
-            setError(err.message || 'OTP verification failed');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleResendOtp = async () => {
-        clearError();
-        setLoading(true);
-        try {
-            const res = await api.post('/auth/send-otp', { email });
-            if (res.otp) {
-                setOtp(res.otp.split(''));
-                setDevOtp(res.otp);
-            } else {
-                setOtp(['', '', '', '', '', '']);
-                setDevOtp('');
-            }
-            otpRefs.current[0]?.focus();
-        } catch (err) {
-            setError('Failed to resend OTP');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ── Step 4: Avatar ─────────────────────────────────────────────
-    const handleStep4 = () => {
-        setStep(5);
-    };
-
-    // ── Step 5: Create Account ─────────────────────────────────────
+    // ── Step 4: Create Account ─────────────────────────────────────
     const handleRegister = async (e) => {
         e.preventDefault();
         clearError();
@@ -183,7 +113,7 @@ export default function OnboardingScreen({ onGoToLogin }) {
         }
     };
 
-    const TOTAL_STEPS = 5;
+    const TOTAL_STEPS = 4;
     const progress = (step / TOTAL_STEPS) * 100;
 
     return (
@@ -226,67 +156,21 @@ export default function OnboardingScreen({ onGoToLogin }) {
                 {step === 2 && (
                     <div className="bm-fu">
                         <h2 className="bm-step-title">Enter your email</h2>
-                        <p className="bm-step-desc">We'll send you a verification code</p>
+                        <p className="bm-step-desc">Your email will be used to sign in</p>
                         <div className="bm-form-group">
-                            <label className="bm-label">Gmail / Email Address</label>
+                            <label className="bm-label">Email Address</label>
                             <input id="ob-email" style={inp} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@gmail.com" autoFocus />
                         </div>
                         {error && <div className="bm-error-msg">{error}</div>}
-                        <button id="ob-send-otp" className="bm-btn-primary" onClick={handleSendOtp} disabled={loading}>
-                            {loading ? 'Sending…' : 'Send OTP'}
+                        <button id="ob-step2-next" className="bm-btn-primary" onClick={handleStep2}>
+                            Continue →
                         </button>
                         <button className="bm-btn-ghost" onClick={() => { clearError(); setStep(1); }}>← Back</button>
                     </div>
                 )}
 
-                {/* ── Step 3: OTP ── */}
+                {/* ── Step 3: Avatar ── */}
                 {step === 3 && (
-                    <div className="bm-fu">
-                        <h2 className="bm-step-title">Verify your email</h2>
-                        <p className="bm-step-desc">Enter the 6-digit code sent to <strong style={{ color: C.green }}>{email}</strong></p>
-                        {devOtp && (
-                            <div style={{
-                                fontSize: 13,
-                                color: C.gold,
-                                background: 'rgba(255,176,32,0.1)',
-                                border: '1px solid rgba(255,176,32,0.2)',
-                                padding: '10px 14px',
-                                borderRadius: 12,
-                                marginBottom: 16,
-                                textAlign: 'center',
-                                lineHeight: '1.4'
-                            }}>
-                                🛠️ <strong>Dev Mode:</strong> OTP auto-filled from response.
-                            </div>
-                        )}
-                        <div className="bm-otp-grid">
-                            {otp.map((d, i) => (
-                                <input
-                                    key={i}
-                                    ref={el => otpRefs.current[i] = el}
-                                    id={`otp-box-${i}`}
-                                    className="bm-otp-box"
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={d}
-                                    onChange={e => handleOtpChange(i, e.target.value)}
-                                    onKeyDown={e => handleOtpKeyDown(i, e)}
-                                    autoFocus={i === 0}
-                                />
-                            ))}
-                        </div>
-                        {error && <div className="bm-error-msg">{error}</div>}
-                        <button id="ob-verify-otp" className="bm-btn-primary" onClick={handleVerifyOtp} disabled={loading}>
-                            {loading ? 'Verifying…' : 'Verify OTP'}
-                        </button>
-                        <button className="bm-btn-ghost" onClick={handleResendOtp} disabled={loading}>Resend OTP</button>
-                        <button className="bm-btn-ghost" onClick={() => { clearError(); setStep(2); }}>← Back</button>
-                    </div>
-                )}
-
-                {/* ── Step 4: Avatar ── */}
-                {step === 4 && (
                     <div className="bm-fu">
                         <h2 className="bm-step-title">Choose your avatar</h2>
                         <p className="bm-step-desc">Pick one that represents you</p>
@@ -303,12 +187,13 @@ export default function OnboardingScreen({ onGoToLogin }) {
                                 </button>
                             ))}
                         </div>
-                        <button id="ob-step4-next" className="bm-btn-primary" onClick={handleStep4}>Continue →</button>
+                        <button id="ob-step3-next" className="bm-btn-primary" onClick={handleStep3}>Continue →</button>
+                        <button className="bm-btn-ghost" onClick={() => { clearError(); setStep(2); }}>← Back</button>
                     </div>
                 )}
 
-                {/* ── Step 5: Password ── */}
-                {step === 5 && (
+                {/* ── Step 4: Password ── */}
+                {step === 4 && (
                     <div className="bm-fu">
                         <h2 className="bm-step-title">Create a password</h2>
                         <form onSubmit={handleRegister} noValidate>
@@ -345,7 +230,7 @@ export default function OnboardingScreen({ onGoToLogin }) {
                             <button id="ob-create-account" type="submit" className="bm-btn-primary" disabled={loading}>
                                 {loading ? 'Creating account…' : '🎉 Create Account'}
                             </button>
-                            <button type="button" className="bm-btn-ghost" onClick={() => { clearError(); setStep(4); }}>← Back</button>
+                            <button type="button" className="bm-btn-ghost" onClick={() => { clearError(); setStep(3); }}>← Back</button>
                         </form>
                     </div>
                 )}

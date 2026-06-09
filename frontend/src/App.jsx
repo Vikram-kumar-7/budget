@@ -237,6 +237,13 @@ function Dashboard({ data, setTab, setModal, setEditing, onAddTxClick }) {
   const debts = data.debts || []
   const budgets = data.budgets || []
 
+  // Daily limit state (persisted in localStorage)
+  const [dailyLimit, setDailyLimit] = useState(() => {
+    const saved = localStorage.getItem('bm_daily_limit')
+    return saved ? Number(saved) : null
+  })
+  const [editingLimit, setEditingLimit] = useState(false)
+  const [limitInput, setLimitInput] = useState('')
   const mTxs = txs.filter(t => t.date >= new Date().toISOString().slice(0, 7) + '-01')
   const income = mTxs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const expense = mTxs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
@@ -308,20 +315,97 @@ function Dashboard({ data, setTab, setModal, setEditing, onAddTxClick }) {
           </div>
         </div>
 
-        {/* Burn rate */}
+        {/* Burn rate / Daily limit card */}
         <div className="bm-fu">
           <Card style={{ height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Daily Budget Left</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Daily Budget Left</div>
+                  <button
+                    id="edit-daily-limit-btn"
+                    onClick={() => { setLimitInput(dailyLimit != null ? String(dailyLimit) : String(Math.max(0, burnRate))); setEditingLimit(true); }}
+                    title="Edit daily limit"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 5, color: C.muted, fontSize: 13, lineHeight: 1, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = C.green}
+                    onMouseLeave={e => e.currentTarget.style.color = C.muted}
+                  >
+                    ✏️
+                  </button>
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: burnColor }}>₹{fmt(burnRate)}<span style={{ fontSize: 13, fontWeight: 400, color: C.muted }}>/day</span></div>
+                {dailyLimit != null && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>
+                    Limit: <span style={{ color: burnRate > dailyLimit ? C.red : C.green, fontWeight: 600 }}>₹{fmt(dailyLimit)}/day</span>
+                    <button
+                      onClick={() => { setDailyLimit(null); localStorage.removeItem('bm_daily_limit'); }}
+                      style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 10, marginLeft: 4, padding: '1px 4px', borderRadius: 4, fontFamily: 'Outfit,sans-serif' }}
+                      title="Remove limit"
+                    >✕</button>
+                  </div>
+                )}
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', minWidth: 110 }}>
                 <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>{burnPct}% of month left</div>
-                <div style={{ width: 110 }}><ProgBar pct={burnPct} color={burnColor} h={6} /></div>
-                <div style={{ fontSize: 11, color: burnColor, marginTop: 4, fontWeight: 600 }}>{burnRate < 0 ? 'Over budget ⚠️' : burnRate < 200 ? 'Careful 🟡' : 'On track 🎯'}</div>
+                <div style={{ width: 110 }}>
+                  <ProgBar
+                    pct={dailyLimit != null ? Math.min(100, Math.round((burnRate / dailyLimit) * 100)) : burnPct}
+                    color={dailyLimit != null ? (burnRate > dailyLimit ? C.red : burnRate > dailyLimit * 0.8 ? C.gold : C.green) : burnColor}
+                    h={6}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: burnColor, marginTop: 4, fontWeight: 600 }}>
+                  {dailyLimit != null
+                    ? burnRate > dailyLimit ? 'Over limit ⚠️' : burnRate > dailyLimit * 0.8 ? 'Near limit 🟡' : 'Within limit 🎯'
+                    : burnRate < 0 ? 'Over budget ⚠️' : burnRate < 200 ? 'Careful 🟡' : 'On track 🎯'
+                  }
+                </div>
               </div>
             </div>
+
+            {/* Inline edit modal for daily limit */}
+            {editingLimit && (
+              <div style={{ marginTop: 14, padding: '12px', background: 'rgba(16,232,160,0.05)', borderRadius: 12, border: `1px solid rgba(16,232,160,0.15)`, animation: 'fadeUp 0.2s ease' }}>
+                <div style={{ fontSize: 12, color: C.green, fontWeight: 600, marginBottom: 8 }}>✏️ Set Daily Spending Limit</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.muted }}>₹</span>
+                    <input
+                      id="daily-limit-input"
+                      autoFocus
+                      type="number"
+                      min="0"
+                      value={limitInput}
+                      onChange={e => setLimitInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          const val = Number(limitInput);
+                          if (val > 0) { setDailyLimit(val); localStorage.setItem('bm_daily_limit', String(val)); }
+                          setEditingLimit(false);
+                        }
+                        if (e.key === 'Escape') setEditingLimit(false);
+                      }}
+                      placeholder="e.g. 500"
+                      style={{ width: '100%', padding: '9px 10px 9px 26px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(16,232,160,0.25)', borderRadius: 9, color: C.text, fontFamily: 'Outfit,sans-serif', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <button
+                    id="daily-limit-save"
+                    onClick={() => {
+                      const val = Number(limitInput);
+                      if (val > 0) { setDailyLimit(val); localStorage.setItem('bm_daily_limit', String(val)); }
+                      setEditingLimit(false);
+                    }}
+                    style={{ padding: '9px 14px', background: C.green, border: 'none', borderRadius: 9, color: '#0A0E19', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'Outfit,sans-serif', whiteSpace: 'nowrap' }}
+                  >Save</button>
+                  <button
+                    onClick={() => setEditingLimit(false)}
+                    style={{ padding: '9px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, color: C.muted, fontSize: 13, cursor: 'pointer', fontFamily: 'Outfit,sans-serif' }}
+                  >✕</button>
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>Current burn rate: <span style={{ color: burnColor }}>₹{fmt(burnRate)}/day</span> · Press Enter or Save</div>
+              </div>
+            )}
           </Card>
         </div>
       </div>
