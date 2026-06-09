@@ -229,7 +229,7 @@ function Spinner() {
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────
-function Dashboard({ data, setTab, setModal, setEditing }) {
+function Dashboard({ data, setTab, setModal, setEditing, onAddTxClick }) {
   const { user } = useAuth()
   const txs = data.txs || []
   const accounts = data.accounts || []
@@ -264,7 +264,7 @@ function Dashboard({ data, setTab, setModal, setEditing }) {
   return (
     <div style={{ overflowY: 'auto', paddingBottom: 8 }}>
       {/* Header */}
-      <div className="bm-fu" style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="bm-dash-header bm-fu" style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Logo sz={30} />
           <div>
@@ -275,7 +275,7 @@ function Dashboard({ data, setTab, setModal, setEditing }) {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button
             id="dashboard-add-tx"
-            onClick={() => { setModal('addTx'); setEditing(null) }}
+            onClick={onAddTxClick}
             style={{ width: 36, height: 36, borderRadius: '50%', background: `${C.green}18`, border: `1px solid ${C.green}30`, color: C.green, fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 300 }}
           >+</button>
           <button
@@ -287,45 +287,48 @@ function Dashboard({ data, setTab, setModal, setEditing }) {
         </div>
       </div>
 
-      {/* Hero balance card */}
-      <div className="bm-fu" style={{ margin: '14px 16px 0', padding: '20px', background: 'linear-gradient(135deg,#152535,#0E1D2E 50%,#0A1520)', borderRadius: 22, border: `1px solid rgba(16,232,160,0.12)`, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, background: 'radial-gradient(circle,rgba(16,232,160,0.07) 0%,transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
-          {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} · Net Worth ₹{fmt(netWorth)}
-        </div>
-        <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -1, marginBottom: 16 }}>₹{fmt(balance)}</div>
-        <div style={{ display: 'flex', borderTop: `1px solid rgba(255,255,255,0.07)`, paddingTop: 14 }}>
-          <div style={{ flex: 1, borderRight: `1px solid rgba(255,255,255,0.07)`, paddingRight: 16 }}>
-            <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>Income ↑</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.green }}>₹{fmt(income)}</div>
+      {/* Hero + Burn Rate — 2-column grid on desktop */}
+      <div className="bm-dash-top-grid" style={{ margin: '14px 16px 0' }}>
+        {/* Hero balance card */}
+        <div className="bm-fu" style={{ padding: '20px', background: 'linear-gradient(135deg,#152535,#0E1D2E 50%,#0A1520)', borderRadius: 22, border: `1px solid rgba(16,232,160,0.12)`, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, background: 'radial-gradient(circle,rgba(16,232,160,0.07) 0%,transparent 65%)', pointerEvents: 'none' }} />
+          <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
+            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} · Net Worth ₹{fmt(netWorth)}
           </div>
-          <div style={{ flex: 1, paddingLeft: 16 }}>
-            <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>Spent ↓</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.red }}>₹{fmt(expense)}</div>
+          <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -1, marginBottom: 16 }}>₹{fmt(balance)}</div>
+          <div style={{ display: 'flex', borderTop: `1px solid rgba(255,255,255,0.07)`, paddingTop: 14 }}>
+            <div style={{ flex: 1, borderRight: `1px solid rgba(255,255,255,0.07)`, paddingRight: 16 }}>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>Income ↑</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.green }}>₹{fmt(income)}</div>
+            </div>
+            <div style={{ flex: 1, paddingLeft: 16 }}>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>Spent ↓</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.red }}>₹{fmt(expense)}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Burn rate */}
-      <div className="bm-fu" style={{ margin: '12px 16px 0' }}>
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Daily Budget Left</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: burnColor }}>₹{fmt(burnRate)}<span style={{ fontSize: 13, fontWeight: 400, color: C.muted }}>/day</span></div>
+        {/* Burn rate */}
+        <div className="bm-fu">
+          <Card style={{ height: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Daily Budget Left</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: burnColor }}>₹{fmt(burnRate)}<span style={{ fontSize: 13, fontWeight: 400, color: C.muted }}>/day</span></div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>{burnPct}% of month left</div>
+                <div style={{ width: 110 }}><ProgBar pct={burnPct} color={burnColor} h={6} /></div>
+                <div style={{ fontSize: 11, color: burnColor, marginTop: 4, fontWeight: 600 }}>{burnRate < 0 ? 'Over budget ⚠️' : burnRate < 200 ? 'Careful 🟡' : 'On track 🎯'}</div>
+              </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>{burnPct}% of month left</div>
-              <div style={{ width: 110 }}><ProgBar pct={burnPct} color={burnColor} h={6} /></div>
-              <div style={{ fontSize: 11, color: burnColor, marginTop: 4, fontWeight: 600 }}>{burnRate < 0 ? 'Over budget ⚠️' : burnRate < 200 ? 'Careful 🟡' : 'On track 🎯'}</div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Budgets */}
       {budgets.length > 0 && (
-        <div className="bm-fu" style={{ margin: '12px 16px 0' }}>
+        <div className="bm-dash-section bm-fu" style={{ margin: '12px 16px 0' }}>
           <Card>
             <SHead title="Budgets" action="View Transactions" onAction={() => setTab('transactions')} />
             {budgets.slice(0, 3).map(b => {
@@ -352,7 +355,7 @@ function Dashboard({ data, setTab, setModal, setEditing }) {
 
       {/* Goals snapshot */}
       {goals.length > 0 && (
-        <div className="bm-fu" style={{ margin: '12px 16px 0' }}>
+        <div className="bm-dash-section bm-fu" style={{ margin: '12px 16px 0' }}>
           <Card>
             <SHead title="Goals 🎯" action="See all" onAction={() => setTab('goals')} />
             {goals.slice(0, 2).map(g => {
@@ -377,14 +380,14 @@ function Dashboard({ data, setTab, setModal, setEditing }) {
 
       {/* Overdue debt alert */}
       {overdue.length > 0 && (
-        <div onClick={() => setTab('debts')} className="bm-fu" style={{ margin: '12px 16px 0', padding: '13px 16px', background: `${C.red}0d`, border: `1px solid ${C.red}28`, borderRadius: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div onClick={() => setTab('debts')} className="bm-dash-section bm-fu" style={{ margin: '12px 16px 0', padding: '13px 16px', background: `${C.red}0d`, border: `1px solid ${C.red}28`, borderRadius: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>⚠️  {overdue.length} debt{overdue.length > 1 ? 's' : ''} overdue</span>
           <span style={{ fontSize: 12, color: C.red }}>View →</span>
         </div>
       )}
 
       {/* Recent transactions */}
-      <div className="bm-fu" style={{ margin: '12px 16px 0' }}>
+      <div className="bm-dash-section bm-fu" style={{ margin: '12px 16px 0' }}>
         <Card>
           <SHead title="Recent Transactions" action="View all" onAction={() => setTab('transactions')} />
           {recent.length === 0
@@ -425,7 +428,7 @@ function Transactions({ data, deleteItem, setModal, setEditing, onAddClick }) {
   const acc = id => accounts.find(a => (a._id || a.id) === id)
 
   return (
-    <div style={{ padding: '16px 16px 0', overflowY: 'auto' }}>
+    <div className="bm-screen-wrapper" style={{ padding: '16px 16px 0', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>Transactions</div>
         <button id="tx-add-btn" onClick={onAddClick} style={{ ...gbtn(C.green, true, 0), width: 'auto', padding: '8px 16px', fontSize: 13 }}>+ Add</button>
@@ -441,6 +444,7 @@ function Transactions({ data, deleteItem, setModal, setEditing, onAddClick }) {
       {sorted.length === 0 && (
         <EmptyState icon="💸" message="No transactions yet" sub="Add your first income or expense to get started." btnLabel="+ Add Transaction" onBtn={onAddClick} />
       )}
+      <div className="bm-tx-list">
       {sorted.map(t => {
         const a = acc(t.accId)
         return (
@@ -465,6 +469,7 @@ function Transactions({ data, deleteItem, setModal, setEditing, onAddClick }) {
           </div>
         )
       })}
+      </div>
       <div style={{ height: 12 }} />
     </div>
   )
@@ -477,7 +482,7 @@ function Accounts({ data, deleteItem, setModal, setEditing }) {
   const netWorth = accounts.reduce((s, a) => s + getbal(a, txs), 0)
 
   return (
-    <div style={{ padding: '16px 16px 0', overflowY: 'auto' }}>
+    <div className="bm-screen-wrapper" style={{ padding: '16px 16px 0', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>Accounts</div>
         <button id="acc-add-btn" onClick={() => { setEditing(null); setModal('addAcc') }} style={{ ...gbtn(C.green, true, 0), width: 'auto', padding: '8px 16px', fontSize: 13 }}>+ Add</button>
@@ -485,7 +490,7 @@ function Accounts({ data, deleteItem, setModal, setEditing }) {
       <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>Net Worth: <span style={{ color: netWorth >= 0 ? C.green : C.red, fontWeight: 700 }}>₹{fmt(netWorth)}</span></div>
       {accounts.length === 0
         ? <EmptyState icon="🏦" message="No accounts yet" sub="Add a bank or cash account to start tracking." btnLabel="+ Add Account" onBtn={() => { setEditing(null); setModal('addAcc') }} />
-        : accounts.map(a => {
+        : <div className="bm-acc-list">{accounts.map(a => {
           const bal = getbal(a, txs)
           const atxs = txs.filter(t => t.accId === (a._id || a.id))
           return (
@@ -513,7 +518,8 @@ function Accounts({ data, deleteItem, setModal, setEditing }) {
               </div>
             </div>
           )
-        })
+        })}
+        </div>
       }
       <div style={{ height: 12 }} />
     </div>
@@ -543,7 +549,7 @@ function Goals({ data, deleteItem, setModal, setEditing }) {
             </div>
             <ProgBar pct={overallPct} color={`linear-gradient(90deg,${C.green},${C.blue},${C.violet})`} h={7} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="bm-goals-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {goals.map(g => {
               const savedAmt = g.saved || g.savedAmount || 0
               const p = pct(savedAmt, g.target)
@@ -865,6 +871,61 @@ function BottomNav({ tab, setTab }) {
   )
 }
 
+// ── Sidebar Nav (desktop) ────────────────────────────────────────
+function SidebarNav({ tab, setTab, onAddTx }) {
+  return (
+    <>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28, paddingLeft: 4 }}>
+        <Logo sz={30} />
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>BudgetMaster</div>
+          <div style={{ fontSize: 11, color: C.muted }}>Personal Finance</div>
+        </div>
+      </div>
+
+      {/* Add Transaction CTA button */}
+      <button
+        id="sidebar-add-tx"
+        onClick={onAddTx}
+        style={{ width: '100%', padding: '12px 14px', marginBottom: 20, background: `linear-gradient(135deg,${C.green},#0BC78A)`, border: 'none', borderRadius: 13, color: '#0A0E19', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Outfit,sans-serif', boxShadow: `0 4px 20px ${C.green}28`, transition: 'transform 0.15s, box-shadow 0.15s' }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 6px 24px ${C.green}44` }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 4px 20px ${C.green}28` }}
+      >
+        <span style={{ fontSize: 20, lineHeight: 1, fontWeight: 300 }}>+</span>
+        Add Transaction
+      </button>
+
+      {/* Nav items */}
+      <nav style={{ flex: 1 }}>
+        {NAV.map(({ id, label, icon }) => {
+          const active = tab === id
+          return (
+            <button key={id} onClick={() => setTab(id)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 13px', marginBottom: 3, borderRadius: 12, background: active ? `${C.green}12` : 'transparent', border: `1px solid ${active ? `${C.green}22` : 'transparent'}`, color: active ? C.green : C.muted, cursor: 'pointer', fontSize: 14, fontWeight: active ? 600 : 400, fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', textAlign: 'left' }}
+            >
+              {icon(active)}
+              <span style={{ marginLeft: 2 }}>{label}</span>
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
+
+      {/* Settings */}
+      <button
+        onClick={() => setTab('settings')}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 13px', borderRadius: 12, background: tab === 'settings' ? `${C.blue}12` : 'transparent', border: `1px solid ${tab === 'settings' ? `${C.blue}22` : 'transparent'}`, color: tab === 'settings' ? C.blue : C.muted, cursor: 'pointer', fontSize: 14, fontWeight: tab === 'settings' ? 600 : 400, fontFamily: 'Outfit,sans-serif', transition: 'all 0.15s', textAlign: 'left' }}
+      >
+        <span style={{ fontSize: 18 }}>⚙️</span>
+        <span style={{ marginLeft: 2 }}>Settings</span>
+      </button>
+    </>
+  )
+}
+
 // ── Main App (inner — needs AuthContext) ───────────────────────────
 function AppInner() {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -982,32 +1043,48 @@ function AppInner() {
   // ── Settings screen ────────────────────────────────────────────
   if (tab === 'settings') {
     return (
-      <div style={{ fontFamily: 'Outfit,sans-serif', color: C.text, background: C.bg, maxWidth: 430, margin: '0 auto', minHeight: '100vh' }}>
+      <div className="bm-app-shell" style={{ fontFamily: 'Outfit,sans-serif', color: C.text }}>
         <style>{CSS}</style>
-        <SettingsScreen onBack={() => setTab('dashboard')} />
+        <aside className="bm-sidebar">
+          <SidebarNav tab={tab} setTab={setTab} onAddTx={() => {}} />
+        </aside>
+        <main className="bm-main-content" style={{ paddingBottom: 0 }}>
+          <SettingsScreen onBack={() => setTab('dashboard')} />
+        </main>
       </div>
     )
   }
 
   // ── Main App ───────────────────────────────────────────────────
   return (
-    <div style={{ fontFamily: 'Outfit,sans-serif', color: C.text, background: C.bg, maxWidth: 430, margin: '0 auto', minHeight: '100vh', position: 'relative' }}>
+    <div className="bm-app-shell" style={{ fontFamily: 'Outfit,sans-serif', color: C.text }}>
       <style>{CSS}</style>
 
-      {dataLoading
-        ? <Spinner />
-        : (
-          <div style={{ paddingBottom: 80 }}>
-            {tab === 'dashboard' && <Dashboard data={data} setTab={setTab} setModal={setModal} setEditing={setEditing} />}
-            {tab === 'transactions' && <Transactions data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} onAddClick={handleAddTxClick} />}
-            {tab === 'accounts' && <Accounts data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} />}
-            {tab === 'goals' && <Goals data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} />}
-            {tab === 'debts' && <Debts data={data} deleteItem={handleDelete} updateItem={handleUpdate} debtTab={debtTab} setDebtTab={setDebtTab} setModal={setModal} setEditing={setEditing} />}
-          </div>
-        )
-      }
+      {/* Sidebar — desktop only, hidden on mobile via CSS */}
+      <aside className="bm-sidebar">
+        <SidebarNav tab={tab} setTab={setTab} onAddTx={handleAddTxClick} />
+      </aside>
 
-      <BottomNav tab={tab} setTab={setTab} />
+      {/* Main scrollable content area */}
+      <main className="bm-main-content">
+        {dataLoading
+          ? <Spinner />
+          : (
+            <>
+              {tab === 'dashboard' && <Dashboard data={data} setTab={setTab} setModal={setModal} setEditing={setEditing} onAddTxClick={handleAddTxClick} />}
+              {tab === 'transactions' && <Transactions data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} onAddClick={handleAddTxClick} />}
+              {tab === 'accounts' && <Accounts data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} />}
+              {tab === 'goals' && <Goals data={data} deleteItem={handleDelete} setModal={setModal} setEditing={setEditing} />}
+              {tab === 'debts' && <Debts data={data} deleteItem={handleDelete} updateItem={handleUpdate} debtTab={debtTab} setDebtTab={setDebtTab} setModal={setModal} setEditing={setEditing} />}
+            </>
+          )
+        }
+      </main>
+
+      {/* Bottom Nav — mobile only, hidden on desktop via CSS */}
+      <div className="bm-bottom-nav-wrapper">
+        <BottomNav tab={tab} setTab={setTab} />
+      </div>
 
       {/* Modals */}
       {modal === 'addTx' && <AddTxModal data={data} onSave={handleSaveTx} editing={editing} onClose={closeModal} />}
@@ -1017,7 +1094,7 @@ function AppInner() {
       {modal === 'addDebt' && <AddDebtModal data={data} onSave={handleSaveDebt} editing={editing} onClose={closeModal} />}
       {modal === 'addBudget' && <AddBudgetModal data={data} onSave={handleSaveBudget} editing={editing} onClose={closeModal} />}
 
-      {/* FIX 4: Account guard modal */}
+      {/* Account guard modal */}
       {showGuard && (
         <AccountGuardModal
           onAddAccount={() => { setShowGuard(false); setEditing(null); setTab('accounts'); setModal('addAcc') }}
