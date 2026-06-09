@@ -60,6 +60,7 @@ export default function OnboardingScreen({ onGoToLogin }) {
 
     // Step 3 — OTP
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [devOtp, setDevOtp] = useState('');
     const otpRefs = useRef([]);
 
     // Step 4 — Avatar
@@ -88,9 +89,15 @@ export default function OnboardingScreen({ onGoToLogin }) {
         if (!emailRegex.test(email)) { setError('Please enter a valid email address'); return; }
         setLoading(true);
         try {
-            await api.post('/auth/send-otp', { email });
+            const res = await api.post('/auth/send-otp', { email });
             setOtpSent(true);
             setStep(3);
+            if (res.otp) {
+                setOtp(res.otp.split(''));
+                setDevOtp(res.otp);
+            } else {
+                setDevOtp('');
+            }
         } catch (err) {
             setError(err.message || 'Failed to send OTP');
         } finally {
@@ -131,8 +138,14 @@ export default function OnboardingScreen({ onGoToLogin }) {
         clearError();
         setLoading(true);
         try {
-            await api.post('/auth/send-otp', { email });
-            setOtp(['', '', '', '', '', '']);
+            const res = await api.post('/auth/send-otp', { email });
+            if (res.otp) {
+                setOtp(res.otp.split(''));
+                setDevOtp(res.otp);
+            } else {
+                setOtp(['', '', '', '', '', '']);
+                setDevOtp('');
+            }
             otpRefs.current[0]?.focus();
         } catch (err) {
             setError('Failed to resend OTP');
@@ -231,6 +244,21 @@ export default function OnboardingScreen({ onGoToLogin }) {
                     <div className="bm-fu">
                         <h2 className="bm-step-title">Verify your email</h2>
                         <p className="bm-step-desc">Enter the 6-digit code sent to <strong style={{ color: C.green }}>{email}</strong></p>
+                        {devOtp && (
+                            <div style={{
+                                fontSize: 13,
+                                color: C.gold,
+                                background: 'rgba(255,176,32,0.1)',
+                                border: '1px solid rgba(255,176,32,0.2)',
+                                padding: '10px 14px',
+                                borderRadius: 12,
+                                marginBottom: 16,
+                                textAlign: 'center',
+                                lineHeight: '1.4'
+                            }}>
+                                🛠️ <strong>Dev Mode:</strong> OTP auto-filled from response.
+                            </div>
+                        )}
                         <div className="bm-otp-grid">
                             {otp.map((d, i) => (
                                 <input

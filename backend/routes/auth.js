@@ -2,53 +2,58 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// ── Brevo SMTP transporter (300 emails/day free, works on Render) ──
-function createBrevoTransporter() {
-    return nodemailer.createTransport({
-        host: 'smtp-relay.brevo.com',
-        port: 587,
-        secure: false, // STARTTLS
-        auth: {
-            user: process.env.BREVO_SMTP_USER,  // your Brevo login email
-            pass: process.env.BREVO_SMTP_KEY,   // Brevo SMTP key
-        },
-    });
-}
-
-// Fire-and-forget — never awaited by route, never blocks the response
-function sendOtpEmailBackground(toEmail, otp) {
+// ── Brevo Transactional Email — HTTPS API (works on Render, avoids SMTP port blocks) ──
+// Render blocks outbound SMTP (ports 25/465/587). We use Brevo's REST API
+// over HTTPS port 443 instead, which is never blocked.
+async function sendOtpEmailBackground(toEmail, otp) {
     // Always log OTP to console as a reliable fallback
     console.log(`\n🔐 OTP for ${toEmail}: ${otp}\n`);
 
-    if (!process.env.BREVO_SMTP_USER || !process.env.BREVO_SMTP_KEY) {
-        console.warn('[email] BREVO_SMTP_USER or BREVO_SMTP_KEY not set — OTP only in logs above');
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+        console.warn('[email] BREVO_API_KEY not set — OTP only in logs above');
         return;
     }
 
-    const transporter = createBrevoTransporter();
-    transporter.sendMail({
-        from: '"BudgetMaster" <vk4780024@gmail.com>',
-        to: toEmail,
-        subject: '🔐 Your BudgetMaster Verification Code',
-        html: `
-            <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0A0E19;color:#E8F0FE;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.08)">
-                <h2 style="color:#10E8A0;margin-bottom:4px">BudgetMaster</h2>
-                <p style="color:#5A6A88;margin-top:0">Your personal finance companion</p>
-                <p style="font-size:16px">Your verification code is:</p>
-                <div style="background:#111827;border-radius:12px;padding:24px;text-align:center;border:1px solid rgba(16,232,160,0.2);margin:16px 0">
-                    <span style="font-size:42px;font-weight:700;letter-spacing:14px;color:#10E8A0">${otp}</span>
-                </div>
-                <p style="color:#5A6A88;font-size:13px">Expires in <strong style="color:#FFB020">10 minutes</strong>. Do not share this code.</p>
-            </div>`,
-    }).then(info => {
-        console.log(`[email] ✅ Delivered to ${toEmail}, messageId: ${info.messageId}`);
-    }).catch(err => {
-        console.error(`[email] ❌ Brevo error for ${toEmail}:`, err.message);
-    });
+    const fromEmail = process.env.BREVO_SMTP_FROM || process.env.BREVO_SMTP_USER || 'noreply@budgetmaster.app';
+
+    try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': apiKey,
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                sender: { name: 'BudgetMaster', email: fromEmail },
+                to: [{ email: toEmail }],
+                subject: '🔐 Your BudgetMaster Verification Code',
+                htmlContent: `
+                    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0A0E19;color:#E8F0FE;border-radius:16px;padding:32px;border:1px solid rgba(255,255,255,0.08)">
+                        <h2 style="color:#10E8A0;margin-bottom:4px">BudgetMaster</h2>
+                        <p style="color:#5A6A88;margin-top:0">Your personal finance companion</p>
+                        <p style="font-size:16px">Your verification code is:</p>
+                        <div style="background:#111827;border-radius:12px;padding:24px;text-align:center;border:1px solid rgba(16,232,160,0.2);margin:16px 0">
+                            <span style="font-size:42px;font-weight:700;letter-spacing:14px;color:#10E8A0">${otp}</span>
+                        </div>
+                        <p style="color:#5A6A88;font-size:13px">Expires in <strong style="color:#FFB020">10 minutes</strong>. Do not share this code.</p>
+                    </div>`,
+            }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log(`[email] ✅ Delivered to ${toEmail}, messageId: ${data.messageId}`);
+        } else {
+            console.error(`[email] ❌ Brevo API error for ${toEmail}:`, data.message || JSON.stringify(data));
+        }
+    } catch (err) {
+        console.error(`[email] ❌ Brevo fetch error for ${toEmail}:`, err.message);
+    }
 }
 
 
@@ -105,7 +110,12 @@ router.post('/send-otp', async (req, res) => {
         }
 
         // ⚡ Respond immediately — don't wait for email sending
-        res.json({ success: true, message: 'OTP sent' });
+        const isDev = process.env.NODE_ENV === 'development' || !process.env.BREVO_API_KEY;
+        res.json({ 
+            success: true, 
+            message: 'OTP sent',
+            ...(isDev && { otp })
+        });
 
         // Send email in the background (fire-and-forget)
         sendOtpEmailBackground(email, otp);
